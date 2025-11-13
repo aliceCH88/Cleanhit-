@@ -1,0 +1,139 @@
+// CleanHit - Complete Vercel-ready React Website
+// -------------------------------------------------------------
+// This version includes full English content with Vape Contamination info, examples, references, and a purchase page with price $6.50
+
+// ------------------- api/create-checkout-session.js -------------------
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    try {
+      const { quantity } = req.body;
+      const domain = process.env.DOMAIN || 'http://localhost:5173';
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: 'CleanHit Heavy Metal Test Kit' },
+            unit_amount: 650
+          },
+          quantity: quantity || 1
+        }],
+        mode: 'payment',
+        success_url: `${domain}/success`,
+        cancel_url: `${domain}/cancel`
+      });
+      res.status(200).json({ url: session.url });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to create session' });
+    }
+  } else {
+    res.setHeader('Allow', 'POST');
+    res.status(405).end('Method Not Allowed');
+  }
+}
+
+// ------------------- src/App.jsx -------------------
+import React from 'react';
+import axios from 'axios';
+
+const PRODUCT = {
+  id: 'cleanhit-kit-001',
+  name: 'CleanHit Heavy Metal Test Kit',
+  price_cents: 650,
+  price_display: '$6.50',
+  description: 'Rapid heavy-metal screening kit for disposable vapes. Lab-grade filter and mail-in analysis option.',
+  img: 'https://images.unsplash.com/photo-1582719478250-42d7d4a8b4f0?auto=format&fit=crop&w=800&q=60'
+};
+
+export default function App() {
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+
+  async function handleBuy() {
+    setLoading(true); setError(null);
+    try {
+      const res = await axios.post('/api/create-checkout-session', { quantity: 1 });
+      const { url } = res.data;
+      window.location.href = url;
+    } catch (err) {
+      console.error(err);
+      setError('Unable to create payment session, please try again later.');
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 font-sans text-gray-900 p-6">
+      <header className="max-w-4xl mx-auto py-6">
+        <h1 className="text-3xl font-bold">CleanHit</h1>
+        <p className="mt-1 text-gray-600">Vape Contamination — A hidden problem in life</p>
+        <p className="mt-2 text-gray-700">Do you really know what’s in your vape? Most people believe vaping is safer than smoking. But many vapes—especially cheap, disposable ones—contain more than just nicotine and flavoring. Inside your vape device, the metal coil and internal parts can heat up and release tiny particles of toxic metals. Every time you inhale, you could be pulling chromium, nickel, lead, or tin deep into your lungs—without any warning, any smell, or any taste. These metals are not listed on the label, and even popular, widely used products like Elf Bar and Air Bar have been found to contain unsafe levels of heavy metals in lab tests.</p>
+      </header>
+      <main className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+        <section>
+          <img src={PRODUCT.img} alt="product" className="w-full rounded-2xl shadow-md" />
+          <div className="mt-6 bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-2xl font-semibold">Types of heavy metals that may hurt you</h2>
+            <table className="w-full mt-3 text-sm text-gray-700 table-auto">
+              <tbody>
+                <tr><td className="font-medium">Nickel (Ni)</td><td>From heating coils — Short-term: sore throat, coughing, allergic reactions; Long-term: lung inflammation, higher cancer risk, metal hypersensitivity</td></tr>
+                <tr><td className="font-medium">Chromium (Cr)</td><td>Stainless steel parts — Short-term: metallic taste, tight chest, nausea; Long-term: known carcinogen, linked to lung cancer and cell damage</td></tr>
+                <tr><td className="font-medium">Lead (Pb)</td><td>Soldering inside cheap vapes — Short-term: fatigue, headache, concentration issues; Long-term: brain and nerve damage, especially dangerous for teenagers; may cause learning problems and mood changes</td></tr>
+                <tr><td className="font-medium">Cadmium (Cd) / Tin (Sn)</td><td>Cheap metals used in unregulated devices — Short-term: chest pain, nausea; Long-term: kidney and liver damage, immune suppression</td></tr>
+              </tbody>
+            </table>
+            <h3 className="mt-4 font-semibold">Potential health consequences:</h3>
+            <ul className="list-disc ml-5 mt-1">
+              <li>Lung disease (asthma, chronic bronchitis)</li>
+              <li>Brain and nerve damage</li>
+              <li>Hormonal imbalance and developmental issues (especially in teens)</li>
+              <li>Cancer (lung and throat)</li>
+              <li>Memory loss, fatigue, depression</li>
+              <li>Organ failure (kidney, liver)</li>
+            </ul>
+            <h3 className="mt-4 font-semibold">Real-world examples & references:</h3>
+            <ul className="list-disc ml-5 mt-1 text-blue-600 underline">
+              <li><a href="https://globalnews.ca/news/10462543/youth-vaping-toxic-lead-metal-risk-study/" target="_blank">Youth vaping heavy metal risk study</a></li>
+              <li><a href="https://www.news-medical.net/news/20221209/Study-reveals-the-presence-of-metal-particles-in-cannabis-vape-liquids.aspx" target="_blank">Metal particles in cannabis vape liquids</a></li>
+              <li><a href="https://bmjgroup.com/frequent-teen-vaping-might-boost-risk-of-toxic-lead-and-uranium-exposure/" target="_blank">Frequent teen vaping exposure</a></li>
+            </ul>
+          </div>
+        </section>
+        <aside className="space-y-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <h3 className="text-xl font-semibold">Buy Now</h3>
+            <p className="mt-2 text-gray-700">{PRODUCT.description}</p>
+            <div className="mt-4 flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold">{PRODUCT.price_display}</div>
+              </div>
+              <button onClick={handleBuy} disabled={loading} className="px-4 py-2 bg-black text-white rounded-lg shadow hover:opacity-95 disabled:opacity-60">
+                {loading ? 'Processing...' : 'Buy now'}
+              </button>
+            </div>
+            {error && <p className="mt-3 text-red-600">{error}</p>}
+          </div>
+        </aside>
+      </main>
+      <footer className="max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm">
+        <p>© CleanHit — Detect heavy metals in disposable vapes. Not a medical device. For informational use only.</p>
+      </footer>
+    </div>
+  );
+}
+
+// ------------------- src/main.jsx -------------------
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './styles.css';
+
+createRoot(document.getElementById('root')).render(<App />);
+
+// ------------------- Additional files -------------------
+// index.html, styles.css, package.json, vite.config.js remain same, ready for Vercel deployment.
