@@ -1,0 +1,121 @@
+// index.jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import axios from 'axios';
+import './styles.css';
+
+// Product info
+const PRODUCT = {
+  id: 'cleanhit-kit-001',
+  name: 'CleanHit Heavy Metal Test Kit',
+  price_cents: 650,
+  price_display: '$6.50',
+  description:
+    'Rapid heavy-metal screening kit for disposable vapes. Lab-grade filter and mail-in analysis option.',
+  img: 'https://images.unsplash.com/photo-1582719478250-42d7d4a8b4f0?auto=format&fit=crop&w=800&q=60',
+};
+
+// Stripe Checkout API (serverless function simulation)
+async function createCheckoutSession(quantity = 1) {
+  try {
+    const res = await axios.post('/api/create-checkout-session', { quantity });
+    return res.data.url;
+  } catch (err) {
+    console.error('Checkout session error:', err);
+    throw new Error('Unable to create checkout session.');
+  }
+}
+
+function App() {
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+
+  const handleBuy = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = await createCheckoutSession(1);
+      window.location.href = url;
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 p-6">
+      <header className="max-w-4xl mx-auto py-6">
+        <h1 className="text-3xl font-bold">CleanHit</h1>
+        <p className="mt-1 text-gray-600">Vape Contamination — A hidden problem in life</p>
+        <p className="mt-2 text-gray-700">
+          Do you really know what’s in your vape? Many vapes—especially cheap, disposable ones—contain more than just nicotine and flavoring. Metal coils and internal parts can release chromium, nickel, lead, or tin deep into your lungs. Even popular brands like Elf Bar and Air Bar have unsafe levels in lab tests.
+        </p>
+      </header>
+      <main className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+        <section>
+          <img src={PRODUCT.img} alt="product" className="w-full rounded-2xl shadow-md" />
+          <div className="mt-6 bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-2xl font-semibold">Heavy Metals in Vapes</h2>
+            <ul className="list-disc ml-5 mt-2">
+              <li>
+                <strong>Nickel (Ni)</strong> – from heating coils; short-term: sore throat, coughing; long-term: lung inflammation, cancer risk
+              </li>
+              <li>
+                <strong>Chromium (Cr)</strong> – stainless steel parts; short-term: metallic taste, tight chest; long-term: carcinogen
+              </li>
+              <li>
+                <strong>Lead (Pb)</strong> – soldering in cheap vapes; short-term: fatigue, headache; long-term: brain and nerve damage
+              </li>
+              <li>
+                <strong>Cadmium/Tin (Cd/Sn)</strong> – cheap metals in unregulated devices; short-term: chest pain, nausea; long-term: kidney/liver damage
+              </li>
+            </ul>
+            <h3 className="mt-4 font-semibold">Health Consequences</h3>
+            <ul className="list-disc ml-5 mt-1">
+              <li>Lung disease (asthma, chronic bronchitis)</li>
+              <li>Brain and nerve damage</li>
+              <li>Hormonal imbalance & developmental issues</li>
+              <li>Cancer (lung, throat)</li>
+              <li>Memory loss, fatigue, depression</li>
+              <li>Organ failure (kidney, liver)</li>
+            </ul>
+            <h3 className="mt-4 font-semibold">References & Examples</h3>
+            <ul className="list-disc ml-5 mt-1 text-blue-600 underline">
+              <li>
+                <a href="https://globalnews.ca/news/10462543/youth-vaping-toxic-lead-metal-risk-study/" target="_blank">Youth vaping heavy metal study</a>
+              </li>
+              <li>
+                <a href="https://www.news-medical.net/news/20221209/Study-reveals-the-presence-of-metal-particles-in-cannabis-vape-liquids.aspx" target="_blank">Metal particles in cannabis vape liquids</a>
+              </li>
+              <li>
+                <a href="https://bmjgroup.com/frequent-teen-vaping-might-boost-risk-of-toxic-lead-and-uranium-exposure/" target="_blank">Frequent teen vaping exposure</a>
+              </li>
+            </ul>
+          </div>
+        </section>
+        <aside className="space-y-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <h3 className="text-xl font-semibold">Buy Now</h3>
+            <p className="mt-2 text-gray-700">{PRODUCT.description}</p>
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-2xl font-bold">{PRODUCT.price_display}</div>
+              <button
+                onClick={handleBuy}
+                disabled={loading}
+                className="px-4 py-2 bg-black text-white rounded-lg shadow hover:opacity-95 disabled:opacity-60"
+              >
+                {loading ? 'Processing...' : 'Buy now'}
+              </button>
+            </div>
+            {error && <p className="mt-3 text-red-600">{error}</p>}
+          </div>
+        </aside>
+      </main>
+      <footer className="max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm">
+        <p>© CleanHit — Detect heavy metals in disposable vapes. Not a medical device. For informational use only.</p>
+      </footer>
+    </div>
+  );
+}
+
+createRoot(document.getElementById('root')).render(<App />);
